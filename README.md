@@ -52,6 +52,10 @@ uv tool install --prerelease allow gpt2giga
 gpt2giga
 ```
 
+Также можно использовать готовый бинарник для своей операционной системы и
+архитектуры, скачав архив на странице
+[GitHub Releases](https://github.com/ai-forever/gpt2giga/releases).
+
 Текущая alpha-preview линия Unified Harness — `0.5.0a1`. Её всегда можно
 запустить [из source checkout](./docs/harness.md#quickstart). Опубликованный
 provider-neutral пакет добавляет команды `giga` и `gpt2giga-harness`:
@@ -113,6 +117,24 @@ print(response.content[0].text)
 ```
 
 Больше вариантов запуска — в [Quickstart](./docs/quickstart.md).
+
+## Сборка standalone-бинарника
+
+Из корня репозитория соберите исполняемый файл через `uv`:
+
+```sh
+make build-binary
+```
+
+Готовый бинарник появится в `dist/gpt2giga`. Запустить его с отдельным
+файлом конфигурации можно так:
+
+```sh
+./dist/gpt2giga --env-path /path/to/.env
+```
+
+Бинарник собирается для текущей операционной системы и архитектуры. `.env`,
+сертификаты и другие внешние файлы в него автоматически не встраиваются.
 
 ## Документация
 

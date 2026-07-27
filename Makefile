@@ -8,6 +8,7 @@
 .PHONY: traefik traefik-up traefik-down
 .PHONY: observe-multiple observe-multiple-up observe-multiple-down
 .PHONY: docs docs-preview docs-dev docs-dev-ru docs-ru docs-install docs-build docs-start docs-start-ru docs-serve docs-clear
+.PHONY: build-binary
 
 COMPOSE_ENV_FILE = .env
 DOCKER_COMPOSE = docker compose --env-file $(COMPOSE_ENV_FILE)
@@ -150,3 +151,6 @@ observe-multiple-up:
 
 observe-multiple-down:
 	$(DOCKER_COMPOSE) -f $(COMPOSE_OBSERVE_MULTIPLE) down
+
+build-binary:
+	uv run --with pyinstaller pyinstaller --clean gpt2giga.spec

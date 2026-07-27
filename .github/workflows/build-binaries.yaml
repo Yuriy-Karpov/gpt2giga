@@ -1,0 +1,81 @@
+name: Build Standalone Binaries
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.asset_name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            asset_name: gpt2giga-macos-amd64
+            binary_name: gpt2giga
+            archive_ext: tar.gz
+          - os: ubuntu-latest
+            asset_name: gpt2giga-linux-amd64
+            binary_name: gpt2giga
+            archive_ext: tar.gz
+          - os: windows-latest
+            asset_name: gpt2giga-windows-amd64
+            binary_name: gpt2giga.exe
+            archive_ext: zip
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Build standalone binary
+        shell: bash
+        run: uv run --with pyinstaller pyinstaller --clean gpt2giga.spec
+
+      - name: Stage release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "release/${{ matrix.asset_name }}"
+          cp "dist/${{ matrix.binary_name }}" "release/${{ matrix.asset_name }}/${{ matrix.binary_name }}"
+          cp .env.example "release/${{ matrix.asset_name }}/.env.example"
+          cp README.md "release/${{ matrix.asset_name }}/README.md"
+
+      - name: Create tar.gz archive
+        if: matrix.archive_ext == 'tar.gz'
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar -C release -czf "release/${{ matrix.asset_name }}.tar.gz" "${{ matrix.asset_name }}"
+
+      - name: Create zip archive
+        if: matrix.archive_ext == 'zip'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "release/${{ matrix.asset_name }}" -DestinationPath "release/${{ matrix.asset_name }}.zip"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: release/${{ matrix.asset_name }}.${{ matrix.archive_ext }}
+
+      - name: Upload archive to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/${{ matrix.asset_name }}.${{ matrix.archive_ext }}
